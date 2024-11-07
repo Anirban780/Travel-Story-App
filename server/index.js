@@ -25,6 +25,10 @@ const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:8000';  // 
 // Serve static files from the assets folder
 app.use('/assets', express.static('assets'));
 
+app.get('/', (req, res) => {
+    res.status(200).json("Welcome to Backend Part of Travel Story App");
+});
+
 // CORS configuration for allowing both frontend URLs
 app.use(cors({
     origin: [
