@@ -18,10 +18,16 @@ const TravelStory= require("./models/travelStory.model.js");
 mongoose.connect(config.connectionString);
 
 const app= express();
-app.use(express.json())
+app.use(express.json());
+
+// Serve static files from the assets folder
+app.use('/assets', express.static('assets'));
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Allow requests from your frontend
+    origin: [
+        'https://travel-story-app-frontend.vercel.app',  // Production frontend URL
+        'http://localhost:5173'                          // Development frontend URL
+    ],
     credentials: true,
 }));
 
