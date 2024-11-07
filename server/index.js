@@ -25,11 +25,13 @@ app.use('/assets', express.static('assets'));
 
 app.use(cors({
     origin: [
-        'https://travel-story-app-frontend.vercel.app',  // Production frontend URL
-        'http://localhost:5173'                          // Development frontend URL
+        'https://travel-story-app-frontend.vercel.app', // Your frontend URL
+        'http://localhost:5173' // Local development (if needed)
     ],
-    credentials: true,
+    credentials: true, // Allow cookies if needed
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
+
 
 
 
