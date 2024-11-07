@@ -5,7 +5,6 @@ import { validateEmail } from '../../utils/helper';
 import axiosInstance from '../../utils/axiosInstance';
 import bgImage from '../../assets/Images/bg-image.png';
 
-
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -28,37 +27,37 @@ const Login = () => {
 
         setError("");
 
-        //Login API Call
+        // Login API Call
         try {
             const response = await axiosInstance.post("/login", {
                 email: email,
                 password: password,
             });
 
-            //handle successful login response
+            // Handle successful login response
             if (response.data && response.data.accessToken) {
                 localStorage.setItem("token", response.data.accessToken);
                 navigate("/dashboard");
             }
         }
         catch (error) {
-            //handle login error
+            // Handle login error
             if (
                 error.response &&
                 error.response.data &&
                 error.response.data.message
             ) {
                 setError(error.response.data.message);
-            }
-            else {
-                setError("An unexpected error occured. Please try again");
+            } else if (error.request) {
+                setError("Network error, please try again.");
+            } else {
+                setError("An unexpected error occurred. Please try again.");
             }
         }
     };
 
     return (
-        <div className='h-screen bg-cyan-50 overflow-hidden realtive'>
-
+        <div className='h-screen bg-cyan-50 overflow-hidden relative'>
             <div className='login-ui-box right-10 -top-40' />
             <div className='login-ui-box bg-cyan-200 -bottom-40 right-1/2' />
 
@@ -66,13 +65,12 @@ const Login = () => {
                 <div
                     style={{ backgroundImage: `url(${bgImage})` }}
                     className='w-2/4 h-[90vh] flex items-end bg-cover bg-center rounded-lg p-10 z-50'>
-                    
                     <div>
                         <h4 className='text-5xl text-white font-semibold leading-[58px]'>
                             Capture Your <br /> Journeys
                         </h4>
                         <p className='text-[15px] text-white leading-6 pr-7 mt-4'>
-                            Record your travel expreriences and memories in your personal travel journal
+                            Record your travel experiences and memories in your personal travel journal
                         </p>
                     </div>
                 </div>
@@ -83,10 +81,14 @@ const Login = () => {
                             Login
                         </h4>
 
-                        <input type="text" placeholder="Email" className='input-box'
+                        <input 
+                            type="text" 
+                            placeholder="Email" 
+                            className='input-box'
                             value={email}
                             onChange={({ target }) => {
                                 setEmail(target.value);
+                                setError(""); // Clear error when typing
                             }}
                         />
 
@@ -94,6 +96,7 @@ const Login = () => {
                             value={password}
                             onChange={({ target }) => {
                                 setPassword(target.value);
+                                setError(""); // Clear error when typing
                             }}
                         />
 
@@ -106,7 +109,7 @@ const Login = () => {
                         <p className='text-xs text-slate-500 text-center my-4'>Or</p>
 
                         <button
-                            type='submit'
+                            type='button' // Changed from 'submit' to 'button'
                             className='btn-primary btn-light'
                             onClick={() => {
                                 navigate("/signUp");
@@ -121,4 +124,4 @@ const Login = () => {
     )
 }
 
-export default Login
+export default Login;
