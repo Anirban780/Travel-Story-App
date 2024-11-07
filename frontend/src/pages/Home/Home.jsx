@@ -9,7 +9,7 @@ import AddEditTravelStory from "./AddEditTravelStory";
 import ViewTravelStory from "./ViewTravelStory";
 import EmptyCard from "../../components/Cards/EmptyCard";
 
-import EmptyImg from '../../assets/images/add-story.png'
+import EmptyImg from '../../assets/Images/add-story.png'
 
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
