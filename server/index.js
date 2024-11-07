@@ -20,7 +20,7 @@ const app = express();
 app.use(express.json());
 
 // Determine the backend URL dynamically based on the environment variable
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';  // Default to localhost if not set
+const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:8000';  // Default to localhost if not set
 
 // Serve static files from the assets folder
 app.use('/assets', express.static('assets'));
@@ -40,6 +40,9 @@ app.use(cors({
     credentials: true, // Allow cookies if needed
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
+
+app.options('*', cors());  // This handles preflight requests
+
 
 // Create account
 app.post("/create-account", async (req, res) => {
