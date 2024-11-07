@@ -29,7 +29,7 @@ const Login = () => {
 
         // Login API Call
         try {
-            const response = await axiosInstance.post(`${process.env.VITE_BACKEND_URL}/login`, {
+            const response = await axiosInstance.post("/login", {
                 email: email,
                 password: password,
             });
