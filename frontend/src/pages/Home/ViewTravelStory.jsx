@@ -1,65 +1,23 @@
-import React from 'react'
-import moment from 'moment';
-import { MdAdd, MdDeleteOutline, MdUpdate, MdClose } from "react-icons/md"
-import { GrMapLocation } from 'react-icons/gr';
-const ViewTravelStory = ({ storyInfo, onClose, onEditClick, onDeleteClick }) => {
-    return (
-        <div className='relative'>
-            <div className='flex items-center justify-end'>
-                <div>
-                    <div className='flex items-center gap-3 bg-cyan-50/50 rounded-l-lg'>
-                        <button className='btn-small' onClick={onEditClick}>
-                            <MdUpdate className='text-lg' /> UPDATE STORY
-                        </button>
+import React from 'react';
 
-                        <button className='btn-small btn-delete' onClick={onDeleteClick}>
-                            <MdDeleteOutline className='text-lg' /> Delete
-                        </button>
-
-                        <button className='' onClick={onClose}>
-                            <MdClose className='text-xl text-slate-400' />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <div className='flex-1 flex flex-col gap-2 py-4'>
-                    <h1 className='text-2xl text-slate-950 my-2'>
-                        {storyInfo && storyInfo.title}
-                    </h1>
-
-                    <div className='flex items-center justify-between gap-3 my-auto'>
-                        <span className='text-xs text-slate-950'>
-                            {storyInfo && moment(storyInfo.visitedDate).format("Do MMM YYYY")}
-                        </span>
-
-                        <div className='inline-flex items-center gap-2 text-[13px] text-cyan-600 bg-cyan-200/40 rounded px-2 py-1'>
-                            <GrMapLocation className='text-sm' />
-                            {storyInfo &&
-                                storyInfo.visitedLocation.map((item, index) =>
-                                    storyInfo.visitedLocation.length === index + 1
-                                        ? `${item}`
-                                        : `${item}, `
-                                )}
-                        </div>
-                    </div>
-
-                    <img 
-                        src={storyInfo && storyInfo.imageUrl}
-                        alt="Selected"
-                        className='w-full h-[300px] object-cover rounded-lg my-2'
-                    />
-
-                    <div className='mt-4'>
-                        <p className='text-sm text-slate-600 leading-6 text-justify whitespace-pre-line'>
-                            {storyInfo.story}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+const ViewTravelStory = ({ storyInfo, onClose }) => {
+  if (!storyInfo) return null;
+  return (
+    <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-xl mt-8">
+      <img
+        src={storyInfo.imageUrl}
+        alt={storyInfo.title}
+        className="w-full h-48 object-cover rounded-md mb-4"
+      />
+      <h3 className="text-lg font-semibold">{storyInfo.title}</h3>
+      <p className="text-sm text-gray-600">{storyInfo.visitedLocation}</p>
+      <p className="text-sm mt-2 text-gray-800">{storyInfo.story}</p>
+      <p className="text-xs text-gray-500 mt-2">
+        Visited on: {storyInfo.visitedDate ? new Date(storyInfo.visitedDate).toLocaleDateString() : ''}
+      </p>
+      <button onClick={onClose} className="mt-4 text-blue-600 hover:underline">Close</button>
+    </div>
+  );
 };
 
-export default ViewTravelStory
+export default ViewTravelStory;

@@ -1,242 +1,132 @@
-import React, { useState } from 'react';
-import { MdAdd, MdDeleteOutline, MdUpdate, MdClose } from "react-icons/md";
-import DateSelector from '../../components/Input/DateSelector';
-import ImageSelector from '../../components/Input/ImageSelector';
-import TagInput from '../../components/Input/TagInput';
-import axiosInstance from '../../utils/axiosInstance';
-import moment from "moment";
-import uploadImage from '../../utils/uploadImage';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from 'react';
+import { uploadImage } from '../../api/cloudinary';
+import { addStory, updateStory } from '../../api/db';
 
 const AddEditTravelStory = ({
-  storyInfo,
-  type,
+  storyInfo = {},
+  type = 'add',
   onClose,
-  getAllTravelStories,
+  fetchStories,
+  userId
 }) => {
+  const [formData, setFormData] = useState({
+    title: storyInfo.title || '',
+    story: storyInfo.story || '',
+    visitedLocation: storyInfo.visitedLocation || '',
+    visitedDate: storyInfo.visitedDate ? new Date(storyInfo.visitedDate).toISOString().substr(0, 10) : '',
+    image: null,
+    imageUrl: storyInfo.imageUrl || '',
+  });
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (type === 'edit' && storyInfo) {
+      setFormData((prev) => ({
+        ...prev,
+        title: storyInfo.title || '',
+        story: storyInfo.story || '',
+        visitedLocation: storyInfo.visitedLocation || '',
+        visitedDate: storyInfo.visitedDate ? new Date(storyInfo.visitedDate).toISOString().substr(0, 10) : '',
+        imageUrl: storyInfo.imageUrl || '',
+      }));
+    }
+  }, [storyInfo, type]);
 
-  const [title, setTitle] = useState(storyInfo?.title || "");
-  const [storyImg, setStoryImg] = useState(storyInfo?.imageUrl || null);
-  const [story, setStory] = useState(storyInfo?.story || "");
-  const [visitedLocation, setVisitedLocation] = useState(storyInfo?.visitedLocation || []);
-  const [visitedDate, setVisitedDate] = useState(storyInfo?.visitedDate || null);
-
-  const [error, setError] = useState("");
-
-  //add Travel Story
-  const addNewTravelStory = async () => {
-    try {
-      let imageUrl = "";
-
-      //upload image if present
-      if (storyImg) {
-        const imgUploadRes = await uploadImage(storyImg);
-        //get image URL
-        imageUrl = imgUploadRes.imageUrl || "";
-      }
-
-      const response = await axiosInstance.post("/add-travel-story", {
-        title, story, imageUrl: imageUrl || "",
-        visitedLocation,
-        visitedDate: visitedDate
-          ? moment(visitedDate).valueOf()
-          : moment().valueOf(),
-      });
-
-      if (response.data && response.data.story) {
-        toast.success("Story Added Successfully");
-        //refresh stories
-        getAllTravelStories();
-        //close modal or form
-        onClose();
-      }
-
-    } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        setError(error.response.data.message);
-      }
-      else {
-        //handle unexprected errors
-        setError("An unexpected error occured. PLease try again");
-      }
+  const handleChange = (e) => {
+    if (e.target.name === 'image') {
+      setFormData({ ...formData, image: e.target.files[0] });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
     }
   };
 
-  //Update Travel Story
-  const updateTravelStory = async () => {
-    const storyId = storyInfo._id;
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    let imageUrl = formData.imageUrl;
+    if (formData.image) {
+      try {
+        imageUrl = await uploadImage(formData.image);
+      } catch {
+        setError('Image upload failed');
+        return;
+      }
+    }
+    const storyData = {
+      title: formData.title,
+      story: formData.story,
+      visitedLocation: formData.visitedLocation,
+      visitedDate: formData.visitedDate ? new Date(formData.visitedDate).getTime() : Date.now(),
+      imageUrl,
+      userId,
+    };
     try {
-      let imageUrl = "";
-
-      let postData = {
-        title, story,
-        imageUrl: storyInfo.imageUrl || "",
-        visitedLocation,
-        visitedDate: visitedDate
-          ? moment(visitedDate).valueOf()
-          : moment().valueOf(),
+      if (type === 'add') {
+        await addStory(storyData);
+      } else {
+        await updateStory(storyInfo.id, storyData);
       }
-
-      if (typeof storyImg === 'object') {
-        //upload new image
-        const imgUploadRes = await uploadImage(storyImg);
-        imageUrl = imgUploadRes.imageUrl || "";
-
-        postData = {
-          ...postData,
-          imageUrl: imageUrl,
-        };
-      }
-
-      const response = await axiosInstance.put(
-        "/edit-story/" + storyId,
-        postData
-      );
-
-      if (response.data && response.data.story) {
-        toast.success("Story Updated Successfully");
-        //refresh stories
-        getAllTravelStories();
-        //close modal or form
-        onClose();
-      }
-
-    } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        setError(error.response.data.message);
-      }
-      else {
-        //handle unexprected errors
-        setError("An unexpected error occured. PLease try again");
-      }
-    }
-  };
-
-  const handleAddOrUpdateClick = () => {
-    console.log("Input Data:", { title, storyImg, story, visitedLocation, visitedDate });
-
-    if (!title) {
-      setError("Please enter the title"); return;
-    }
-
-    if (!story) {
-      setError("Please enter the story"); return;
-    }
-
-    setError("");
-
-    if (type === 'edit') {
-      updateTravelStory();
-    }
-    else {
-      addNewTravelStory();
-    }
-  };
-
-  //Delete story image and update the story
-  const handleDeleteStoryImg = async () => {
-    try {
-      const deleteImgRes = await axiosInstance.delete("/delete-image", {
-        params: { imageUrl: storyInfo.imageUrl },
-      });
-
-      if (deleteImgRes.data) {
-        const storyId = storyInfo._id;
-        const postData = {
-          title, story,
-          visitedLocation,
-          visitedDate: moment().valueOf(),
-          imageUrl: "",
-        };
-
-        await axiosInstance.put("/edit-story/" + storyId, postData);
-        setStoryImg(null);
-      }
-
-    } catch (error) {
-      setError("Failed to delete image. Please try again.");
+      fetchStories && fetchStories();
+      onClose && onClose();
+    } catch (err) {
+      setError('Failed to save story. Please try again.');
     }
   };
 
   return (
-    <div className='relative'>
-      <div className='flex items-center justify-between'>
-        <h5 className='text-xl font-medium text-slate-700'>
-          {type === "add" ? "Add Story" : "Update Story"}
-        </h5>
-
-        <div>
-          <div className='flex items-center gap-3 bg-cyan-50/50 rounded-l-lg'>
-            {type === "add" ? <button className='btn-small' onClick={handleAddOrUpdateClick}>
-              <MdAdd className='text-lg' />  ADD STORY
-            </button> : <>
-              <button className='btn-small' onClick={handleAddOrUpdateClick}>
-                <MdUpdate className='text-lg' /> UPDATE STORY
-              </button>
-
-            </>}
-
-            <button className='' onClick={onClose}>
-              <MdClose className='text-xl text-slate-400' />
-            </button>
-          </div>
-
-          {error && (
-            <p className='text-red-500 text-xs pt-2 text-right'>{error}</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <div className='flex-1 flex flex-col gap-2 pt-4'>
-          <label className='input-label'>TITLE</label>
-          <input
-            type="text"
-            className='text-2xl text-slate-950 outline-none'
-            placeholder='Your Blog Title'
-            value={title}
-            onChange={({ target }) => { setTitle(target.value) }}
-          />
-
-          <div className='my-3'>
-            <DateSelector date={visitedDate} setDate={setVisitedDate} />
-          </div>
-
-          <ImageSelector
-            image={storyImg}
-            setImage={setStoryImg}
-            handleDeleteImg={handleDeleteStoryImg}
-          />
-
-          <div className='flex flex-col gap-2 mt-4'>
-            <label className='input-label'>STORY</label>
-            <textarea
-              type="text"
-              className='text-sm text-slate-950 outline-none bg-slate-50 p-2 rounded'
-              placeholder='Your Story'
-              rows={10}
-              value={story}
-              onChange={({ target }) => setStory(target.value)}
-            />
-          </div>
-
-          <div className='pt-3'>
-            <label className='input-label'>VISITED LOCATIONS</label>
-            <TagInput tags={visitedLocation} setTags={setVisitedLocation} />
-          </div>
-        </div>
-      </div>
+    <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-xl mt-8">
+      <h2 className="text-2xl font-semibold mb-4">{type === 'add' ? 'Add a Travel Story' : 'Edit Travel Story'}</h2>
+      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          placeholder="Title"
+          className="w-full p-2 border rounded-md"
+          required
+        />
+        <textarea
+          name="story"
+          value={formData.story}
+          onChange={handleChange}
+          placeholder="Your Story"
+          className="w-full p-2 border rounded-md"
+          required
+        />
+        <input
+          type="text"
+          name="visitedLocation"
+          value={formData.visitedLocation}
+          onChange={handleChange}
+          placeholder="Visited Location"
+          className="w-full p-2 border rounded-md"
+          required
+        />
+        <input
+          type="date"
+          name="visitedDate"
+          value={formData.visitedDate}
+          onChange={handleChange}
+          className="w-full p-2 border rounded-md"
+          required
+        />
+        <input
+          type="file"
+          name="image"
+          onChange={handleChange}
+          className="w-full p-2 border rounded-md"
+          accept="image/*"
+        />
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+          {type === 'add' ? 'Post Story' : 'Update Story'}
+        </button>
+      </form>
+      <button onClick={onClose} className="mt-4 text-blue-600 hover:underline">Cancel</button>
     </div>
   );
-}
+};
 
-export default AddEditTravelStory
+export default AddEditTravelStory;
